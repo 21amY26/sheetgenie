@@ -1,0 +1,5 @@
+/nsynth-train/*
+nsynth-train.jsonwav.tar.gz
+.DS_Store
+/input/*
+/output/*
