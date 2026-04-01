@@ -5,3 +5,4 @@ nsynth-train.jsonwav.tar.gz
 /output/*
 .venv/
 __pycache__/
+frame_pred.ipynb
