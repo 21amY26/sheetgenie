@@ -1,0 +1,45 @@
+import numpy as np, os, pandas as pd
+import librosa, librosa.display, music21
+from music21 import note, stream
+import joblib
+
+model = joblib.load("rf_13_classifier.pkl")
+def extract_features(file_path):
+    '''
+    extract features from monphonic note audio files
+    '''
+    y_audio, sr = librosa.load(file_path, sr=16000)
+
+    mfcc = np.mean(librosa.feature.mfcc(y=y_audio, sr=sr, n_mfcc=13).T, axis=0)
+    chroma = np.mean(librosa.feature.chroma_stft(y=y_audio, sr=sr).T, axis=0)
+    centroid = np.mean(librosa.feature.spectral_centroid(y=y_audio, sr=sr))
+    zcr = np.mean(librosa.feature.zero_crossing_rate(y_audio))
+
+    return np.hstack((mfcc, chroma, centroid, zcr))
+
+def predict_note(file_path):
+    ''' 
+    predict the note and pitch of a monophonic note audio file
+    '''
+    feature=extract_features(file_path)
+    feature=feature.reshape(1,-1)
+
+    pred_pitch=model.predict(feature)[0]
+    pred_note=librosa.midi_to_note(pred_pitch)
+    if "♯" in pred_note:
+        pred_note=pred_note.replace("♯", "#")
+    
+    elif "♭" in pred_note:
+        pred_note=pred_note.replace("♭", "b")
+    
+    return pred_pitch, pred_note
+
+def create_seq_sheet_mono(predicted_notes,path):
+    s=stream.Stream()
+    for i in predicted_notes:
+        n=note.Note(i)
+        n.quarterLength=1
+        s.append(n)
+
+    s.write("musicxml", path)
+    print("Sheet music created at",path)
