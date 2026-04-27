@@ -6,3 +6,4 @@ nsynth-train.jsonwav.tar.gz
 .venv/
 __pycache__/
 frame_pred.ipynb
+pipeline_ver1.py
