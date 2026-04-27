@@ -117,11 +117,46 @@ def build_notes(y, sr, segments):
     return notes, durations
 
 
+def clean_notes_and_durations(notes, durations, min_duration=0.25):
+    cleaned_notes = []
+    cleaned_durations = []
+
+    for n, d in zip(notes, durations):
+        if d < min_duration:
+            if len(cleaned_durations) > 0:
+                cleaned_durations[-1] += d
+            continue
+
+        cleaned_notes.append(n)
+        cleaned_durations.append(d)
+
+    return cleaned_notes, cleaned_durations
+
+
+def quantize_duration(d):
+    allowed = [0.25, 0.5, 1, 2, 4]
+    return min(allowed, key=lambda x: abs(x - d))
+
+
+def postprocess(notes, durations):
+    notes, durations = clean_notes_and_durations(notes, durations)
+
+    quantized = [quantize_duration(d) for d in durations]
+
+    return notes, quantized
+
+
 def process_wav(file_path):
     y, sr = librosa.load(file_path, sr=16000)
     segments = segment_audio_pyin(y, sr)
     segments = merge_close_segments(segments, sr)
     notes, durations = build_notes(y, sr, segments)
+    durations_before = durations.copy()
+
+    notes, durations = postprocess(notes, durations)
+
+    print("Raw durations:", durations_before)
+    print("Cleaned durations:", durations)
 
     return notes, durations
 
